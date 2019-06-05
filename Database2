@@ -1,0 +1,113 @@
+DROP TABLE Enrolls;
+DROP TABLE Teaches;
+DROP TABLE Student;
+DROP TABLE Instructor;
+DROP TABLE Class;
+/* Creates a table to hold enrolled students */
+CREATE TABLE Student
+	(student_id int,
+	 student_name varchar(30),
+	 major varchar(30),
+	 gpa decimal(3,2),
+	 PRIMARY KEY(student_id));
+/* Creates a table to hold offered courses */
+CREATE TABLE Class
+	(schedule_num int,
+	 semester varchar(30),
+	 course_name varchar(30),
+	 course_number varchar(30),
+	 credit int,
+	 department varchar(30),
+	 meeting_time varchar(30),
+	 meeting_place varchar(30),
+	 class_size_limit int,
+	 PRIMARY KEY(schedule_num, semester));
+/* Creates a table to hold instructors */
+CREATE TABLE Instructor
+	(name varchar(30),
+	 department varchar(30),
+	 office varchar(30),
+	 title varchar(15),
+	 PRIMARY KEY(name));
+/* Creates a table to connect enrolled students to the courses they are in. */
+CREATE TABLE Enrolls
+	(schedule_num int,
+	 semester varchar(30),
+	 grade character(2),
+	 FOREIGN KEY(student_id) int REFERENCES Student(student_id),
+	 FOREIGN KEY(schedule_num, semester) REFERENCES Class(schedule_num, semester));
+/* Creates a table to connect Instructors to the Courses they teach.  */
+CREATE TABLE Teaches
+	((name varchar(30)) REFERENCES Instructor(name),
+	 schedule_num int,
+	 semester varchar(30),
+	 FOREIGN(schedule_num, semester) REFERENCES Class(schedule_num,semester));
+/* Inserts values into the student table. */
+INSERT INTO Student values (01, 'Evan Walsh', 'Computer Science', 4.0);
+INSERT INTO Student values (02, 'John Smith', 'Philosiphy', 2.8);
+INSERT INTO Student values (03, 'Stephen Smith', 'Sociology', 3.6);
+/* Inserts values into the class table. */
+insert into Class values (005, 'Fall13', 'Systems Programming', 'CSCI3100', 4, 'Computer Science', 'MWF 4:00-4:50', 'Room 500', 100);
+insert into Class values (004, 'Fall12', 'Data Mining', 'CSCI4300', 4, 'Computer Science', 'MWF 3:00-3:50', 'Room 300', 100);
+insert into Class values (001, 'Spring13', 'Database Design', 'CSCI3700', 4, 'Computer Science', 'MWF 1:00-1:50', 'Room 100', 100);
+insert into Class values (002, 'Spring13', 'Database Management Systems', 'CSCI3200', 4, 'Computer Science', 'MWF 8:00-8:50', 'Room 200', 100);
+insert into Class values (003, 'Fall13', 'History of Philosiphers', 'PHIL3200', 4, 'Philosiphy', 'MWF 10:00-10:50', 'Room 400', 100);
+/* inserts values into the Instructor table */
+insert into Instructor values('Rick jones', 'Computer Science', 'OFF 001', 'Dr.');
+insert into Instructor values('Cameron Smith', 'Computer Science', 'OFF 002', 'Dr.');
+insert into Instructor values('Sean Solley', 'Sociology', 'OFF 003', 'Dr.');
+insert into Instructor values('Hannah Long', 'Computer Science', 'OFF 004', 'Dr.');
+insert into Instructor values('Ana Jones', 'Computer Science', 'OFF 005', 'Dr.');
+/* inserts values into the Enrolls table */
+insert into Enrolls values(001, 'Spring13', 'A');
+insert into Enrolls values(002, 'Spring13', 'C');
+insert into Enrolls values(003, 'Fall13', 'B');
+insert into Enrolls values(005, 'Fall13', 'A');
+insert into Enrolls values(001, 'Spring13', 'A');
+insert into Enrolls values(004, 'Fall12', 'C');
+/* inserts values into the Teaches table */
+insert into Teaches values('Rick jones', 001, 'Spring13');
+insert into Teaches values('Cameron Smith', 002, 'Spring13');
+insert into Teaches values('Sean Solley', 003, 'Fall13');
+insert into Teaches values('Rick jones', 005, 'Fall13');
+insert into Teaches values('Ana Jones', 004, 'Fall12');
+
+COMMIT;
+
+SELECT student_name, major, gpa
+FROM Student
+WHERE gpa > (SELECT avg(gpa) FROM Student)
+ORDER BY gpa desc;
+
+SELECT student_name
+FROM Student, Class, Enrolls
+WHERE Student.student_id = Enrolls.student_id AND 
+Enrolls.schedule_num = Class.schedule_num AND 
+Enrolls.semester = Class.semester AND 
+Class.course_number='CSCI3700';
+INTERSECT
+SELECT student_name
+FROM Student, Class, Enrolls
+WHERE Student.student_id = Enrolls.student_id AND 
+Enrolls.schedule_num = Class.schedule_num AND 
+Enrolls.semester = Class.semester AND 
+Class.course_number = 'CSCI3200';
+
+CREATE VIEW CS_schedule_S13 AS
+SELECT Instructor.name, course_name
+FROM instructor, teaches, class
+WHERE Instructor.department = 'Computer Science' AND Teaches.semester = 'Spring 13' AND Instructor.name = Teaches.name AND Teaches.semester = Class.semester AND Teaches.schedule_num = Class.schedule_num
+Select name, count(course_name)
+From CS_Schedule_S13
+GROUP BY name;
+
+DELETE FROM Teaches
+WHERE scheule_num in (SELECT schedule_num FROM Class WHERE course_name = 'Data Mining' and semester = 'Fall 12');
+DELETE FROM Enrolls
+WHERE scheule_num in (SELECT schedule_num FROM Class WHERE course_name = 'Data Mining' and semester = 'Fall 12');
+DELETE FROM Class
+WHERE course_name = 'Data Mining' and semester = 'Fall12';
+
+UPDATE class 
+SET credit = credit+1 
+WHERE course_name like '%_rogramming%' AND credit <= 4;
